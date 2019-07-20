@@ -7,14 +7,8 @@
 class FileInfo:public noncopyable 
 {
 public:
-    FileInfo(const char* filename)
-    {
-        
-    }
-    ~FileInfo()
-    {
-
-    }
+    FileInfo(const char* filename) ;
+    ~FileInfo();
 private:
     void* addr;
     int size;
@@ -23,12 +17,12 @@ private:
 class Cache:public noncopyable
 {
 public:
-    boost::shared_ptr<FIleInfo*>  getFile(char*);
+    boost::shared_ptr<FileInfo*>  getFile(char*);
 private:
     void cleancache();
 private:
     unordered_map<string,boost::shared_ptr<FileInfo*> > cache;
     //unordered_map<string,int> dict;
     int size;
-}
+};
 #endif 

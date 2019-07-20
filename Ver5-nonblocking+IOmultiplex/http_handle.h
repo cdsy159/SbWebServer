@@ -28,7 +28,10 @@ public:
     void serveStatic();
     void getLine(char*);
     void readRequest();
-    
+    bool isStatic(char*)    
+    void serveStatic();
+    void clienterror(const char*,const char*,const char*);
+    void addResponse(const char*);
 private:
     int fd;
     std::shared_ptr<FileInfo*> file; 
