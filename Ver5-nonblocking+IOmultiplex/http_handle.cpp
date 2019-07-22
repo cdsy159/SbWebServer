@@ -74,10 +74,10 @@ void HttpHandle::serveStatic(char* filename,char* filetype)
     }
     addResponse("HTTP/1.0 200 OK\r\n");
     getFiletype(filename,filetype);
-    struct stat fileinfo;
-    if(state(filename,&fileinfo)<0)
+    //struct stat fileinfo;
+    if(file->size)<0)
         unix_error("Get FileInfo failured!\n");
-    addResponse("Content-length: %d\r\n",fileinfo.st_size);
+    addResponse("Content-length: %d\r\n",file->size);
     addResponse("Content-type: %s\r\n\r\n",filetype);
     sendFile=true;
 }
