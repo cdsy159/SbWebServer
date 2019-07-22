@@ -46,25 +46,58 @@ int HttpHandle::processRead()
     char url[MAXLINE];
     char version[MAXLINE];
     char filename[MAXLINE];
+    char filetype[MAXLINE];
     if(readtBuf()==false)
         return STATE_ERROR;
     getLine(buf);
     sscanf(buf,"%s %s %s",method,url,version);
     if(strcasecmp(method,"GET"))
-        //TODO:clienterror()....
+    {
+        clienterror("Can Only support GET","501","Can Only support GET","Use GET plz!");
+    }//TODO:clienterror()....
     parseurl(url,filename);
     readRequest();
     //isStatic();
-    serveStatic();
+    serveStatic(filename,filetype);
+    return STATE_WRITE;
 }
-void HttpHandle::serveStatic(char* filename)
+void HttpHandle::serveStatic(char* filename,char* filetype)
 {
     //写入响应行和响应头
     // sprintf(writebuf+nWrite,"HTTP/1.0 200 OK\r\n");//响应行
-    addResponse("HTTP/1.0 200 OK\r\n");
+    //addResponse("HTTP/1.0 200 OK\r\n");
     file=g_cache.getFile(filename);
     if(file==NULL)
-        clienterror("No Resource","404","Try Other Page!");//所寻找的资源不存在
+    {
+        clienterror("No Resource","404","No Resource","Use other Page!");//所寻找的资源不存在
+        return;
+    }
+    addResponse("HTTP/1.0 200 OK\r\n");
+    getFiletype(filename,filetype);
+    struct stat fileinfo;
+    if(state(filename,&fileinfo)<0)
+        unix_error("Get FileInfo failured!\n");
+    addResponse("Content-length: %d\r\n",fileinfo.st_size);
+    addResponse("Content-type: %s\r\n\r\n",filetype);
+    sendFile=true;
+}
+void HttpHandle::getFiletype(char* filename,char* filetype)
+{
+    if(strstr(filename,".html"))
+        strcpy(filetype,"text/html");
+    else if(strstr(filename,".gif"))
+        strcpy(filetype,"image/gif");
+    else if(strstr(filename,"image/jpeg"))
+        strcpy(filetype,"image/jpeg");
+    else if(strstr(filename,".png"))
+        strcpy(filetype,"image/png");
+    else if(strstr(filename,".css"))
+        strcpy(filetype,"text/css");
+    else if(strstr(filename,".ttf")||strstr(filename,".otf"))
+        strcpy(filetype,"application/octet-stream");
+    else
+        strcpy(filetype,"text/plain");
+
 }
 void HttpHandle::addResponse(const char* body)
 {
@@ -74,12 +107,32 @@ void HttpHandle::addResponse(const char* body)
         sprintf(writebuf+nWrite,"%s",body);
         nWrite+=num;
 }
+void HttpHandle::addResponse(const char* format,...)
+{
+        va_list args;
+        va_start(args,format);
+        int ret=vsprintf(writebuf+nWrite,format,args);
+        va_end(args);
+        if(ret>=0)
+            nWrite+=ret;
+        return;
+}
 void HttpHandle::clienterror(const char* cause,const char* errnum,const char* shortmsg,const char* longmsg)
 {
         //2019 7.20 TODO:完成clienterror
         char body[MAXLINE];
         sprintf(body,"<html><title>SbWebError</title>");
-        sprintf(body,"%s<body bgcolor")
+        sprintf(body,"%s<body bgcolor=""ffffff""">\r\n",body);
+        sprintf(body,"%s%s: %s\r\n",body,errnum,shortmsg);
+        sprintf(body,"%s<p>%s: %s\r\n",body,longmsg,cause);
+        sprintf(body,"%s<hr><em>The SbWebServer</em>\r\n",body);
+
+        addResponse("HTTP/1.0 %s %s\r\n",errnum,shortmsg);
+        addResponse("Content-type: text/html\r\n");
+        addResponse("Content-length: %d\r\n\r\n",(int)strlen(body));
+        addResponse(body);
+        return;
+
 }
 void HttpHandle::parseurl(char* url,char* filename)
 {

@@ -11,7 +11,7 @@ public:
     ~FileInfo();
 private:
     void* addr;
-    int size;
+    //int size;
     int count;
 };
 class Cache:public noncopyable
@@ -24,5 +24,6 @@ private:
     unordered_map<string,boost::shared_ptr<FileInfo*> > cache;
     //unordered_map<string,int> dict;
     int size;
+    MutexLock mutex_; 
 };
 #endif 

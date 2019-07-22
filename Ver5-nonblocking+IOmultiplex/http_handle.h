@@ -3,7 +3,6 @@
 #include<memory>
 #include"cache.h"
 #include"state.h"
-#include"local.h"
 #define MAXIOBUF 1024
 class HttpHandle:public noncopyable
 {
@@ -29,9 +28,11 @@ public:
     void getLine(char*);
     void readRequest();
     bool isStatic(char*)    
-    void serveStatic();
+    void serveStatic(char*,char*);
+    void getFiletype(char*,char*);
     void clienterror(const char*,const char*,const char*);
     void addResponse(const char*);
+    void addResponse(const char*,...);
 private:
     int fd;
     std::shared_ptr<FileInfo*> file; 
