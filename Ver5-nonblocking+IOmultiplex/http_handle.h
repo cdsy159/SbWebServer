@@ -27,10 +27,10 @@ public:
     void serveStatic();
     void getLine(char*);
     void readRequest();
-    bool isStatic(char*)    
+    bool isStatic(char*);    
     void serveStatic(char*,char*);
     void getFiletype(char*,char*);
-    void clienterror(const char*,const char*,const char*);
+    void clienterror(const char*,const char*,const char*,const char* );
     void addResponse(const char*);
     void addResponse(const char*,...);
 private:

@@ -54,6 +54,7 @@ int HttpHandle::processRead()
     if(strcasecmp(method,"GET"))
     {
         clienterror("Can Only support GET","501","Can Only support GET","Use GET plz!");
+        return STATE_WRITE;
     }//TODO:clienterror()....
     parseurl(url,filename);
     readRequest();
@@ -122,7 +123,7 @@ void HttpHandle::clienterror(const char* cause,const char* errnum,const char* sh
         //2019 7.20 TODO:完成clienterror
         char body[MAXLINE];
         sprintf(body,"<html><title>SbWebError</title>");
-        sprintf(body,"%s<body bgcolor=""ffffff""">\r\n",body);
+        sprintf(body,"%s<body bgcolor=""ffffff"">\r\n",body);
         sprintf(body,"%s%s: %s\r\n",body,errnum,shortmsg);
         sprintf(body,"%s<p>%s: %s\r\n",body,longmsg,cause);
         sprintf(body,"%s<hr><em>The SbWebServer</em>\r\n",body);
@@ -153,4 +154,40 @@ void HttpHandle::readRequest()
             break;
     }
     return;
+}
+int Http_Hanlde::processWrite()
+{
+    int rc;
+    while(nWrite<strlen(writeBuf))
+    {
+        if((rc==write(fd,writeBuf+nWrite,strlen(writeBuf)-nWrite))<0)
+        {
+            if(rc==EAGAIN)
+                return STATE_WRITE;
+            else
+                retrun STATE_ERROR;
+        }
+        nWrite+=rc;
+    }
+    if(sendFile)
+    {
+        int pos=nWrite-strlen(nWrite);
+        while(true)
+        {
+            if((rc=write(fd,(char*)(file->addr)+pos,file->size-pos))<0)
+            {
+                if(rc==EAGAIN)
+                    return STATE_WRITE;
+                else
+                    return STATE_ERROR;
+            }
+            else if(rc==0)
+                break;
+            else
+                nWrite+=rc;
+        }
+    }
+    if(keepAlive)
+        return STATE_READ;
+    return STATE_SUCCESS;
 }
