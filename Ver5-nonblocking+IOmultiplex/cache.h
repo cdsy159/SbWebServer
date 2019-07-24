@@ -10,6 +10,7 @@ class FileInfo:public noncopyable
 public:
     FileInfo(const char* filename,bool& flag) ;
     ~FileInfo();
+    bool cmp(FileInfo*);
 private:
     void* addr;
     int size;

@@ -44,9 +44,22 @@ FileInfo::~FileInfo()
     Munmap(addr,size);
     return;
 }
+bool FileInfo::cmp(FileInfo* b)
+{
+    if(count>b->count)
+        return true;
+    else
+        return false;
+}
+bool compare(FileINfo* a,FileInfo* b)
+{
+    return a->cmp(b);
+}
 void Cache::cleancache()
 {
-    
+    sort(dict.begin(),dict.end(),compare);
+    int mid=dict.size()/2;
+    dict.erase(dict.begin()+mid,dict.end());
 }
 /*
  1.cleancache里面不用加锁，因为调用cleancache时已经加锁了，若在加锁则形成死锁。
