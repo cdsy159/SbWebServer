@@ -41,5 +41,6 @@ ssize_t Writen(int,void*,size_t);
 ssize_t writen(int,void*,size_t);
 void Pthread_create(pthread_t* tidp,const pthread_attr_t* attr,void* (*handle)(void*),void* arg);
 void Pthread_detach(pthread_t tid);
+void SetNonBlocking(int);
 #endif
 

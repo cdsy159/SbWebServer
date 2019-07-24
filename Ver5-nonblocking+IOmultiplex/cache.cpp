@@ -1,16 +1,16 @@
 #include"cache.h"
-boost::shared_ptr<FileInfo*> Cache::getFile(char* filename)
+std::shared_ptr<FileInfo*> Cache::getFile(char* filename)
 {
     //为了避免多个线程同时请求同一个不存在于cache中的资源，在新建这个资源到cache时要加锁.
     MutexLockGuard lock(mutex_);
     if(cache.find(filename)!=cache.end())
     {
-        cache[filename]->count+=1;
+        (*cache[filename])->Add();
         return cache[filename];
     }
     else
     {
-        if(size>=MAXCACHE)
+        if((*cache[filename])->Size()>=MAXCACHE)
             cleancache();
         {
             bool flag;
@@ -18,7 +18,7 @@ boost::shared_ptr<FileInfo*> Cache::getFile(char* filename)
             FileInfo* ptr=new FileInfo(filename,flag);
             if(!flag)
                 return NULL;
-            cache[filename]=make_shared<FileInfo>(*ptr);
+            cache[filename]=std::make_shared<FileInfo*>(ptr);
            // dict.push_back(ptr);
             return cache[filename];
         }
@@ -51,7 +51,15 @@ bool FileInfo::cmp(FileInfo* b)
     else
         return false;
 }
-bool compare(FileINfo* a,FileInfo* b)
+void FileInfo::Add()
+{
+    count++;
+}
+int FileInfo::Size()
+{
+    return size;
+}
+bool compare(FileInfo* a,FileInfo* b)
 {
     return a->cmp(b);
 }

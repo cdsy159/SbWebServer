@@ -4,6 +4,9 @@
 #include<memory>
 #include<map>
 #include"mutex.h"
+#include<vector>
+#include<unordered_map>
+#include<algorithm>
 #define MAXCACHE 100
 class FileInfo:public noncopyable 
 {
@@ -11,6 +14,8 @@ public:
     FileInfo(const char* filename,bool& flag) ;
     ~FileInfo();
     bool cmp(FileInfo*);
+    void Add();
+    int Size();
 private:
     void* addr;
     int size;
@@ -19,12 +24,12 @@ private:
 class Cache:public noncopyable
 {
 public:
-    boost::shared_ptr<FileInfo*>  getFile(char*);
+    std::shared_ptr<FileInfo*>  getFile(char*);
 private:
     void cleancache();
 private:
-    unordered_map<string,boost::shared_ptr<FileInfo*> > cache;
-    vector<FileInfo*> dict; 
+    std::unordered_map<std::string,std::shared_ptr<FileInfo*> > cache;
+    std::vector<FileInfo*> dict; 
     //int size;
     MutexLock mutex_; 
 };

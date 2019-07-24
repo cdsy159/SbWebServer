@@ -2,29 +2,11 @@
 #include"local.h"
 #include"net.h"
 #include"mutex.h"
+#include"cache.h"
+#include"epoll_wrap.h"
 int listenfd;
 MutexLock mutex;
-void* handle_thread(void* arg)
-{
-    Pthread_detach(pthread_self());
-    int *tmp=(int*)arg;
-    int z=*tmp;
-    printf("pthread %d is starting\n",*tmp);
-    delete tmp;
-    sockaddr cliaddr;
-    socklen_t len=sizeof(cliaddr);
-    int connfd;
-    while(true)
-    {
-        {
-            MutexLockGuard lock(mutex);
-            connfd=Accept(listenfd,&cliaddr,&len);
-        }
-        printf("pthread %d is working\n",z);
-        doit(connfd);
-        Close(connfd);
-    }
-}
+Cache g_cache;
 int main()
 {
     listenfd=initList(8080);
@@ -32,15 +14,77 @@ int main()
    // socklen_t len=sizeof(cliaddr);
    // memset(&cliaddr,0,sizeof(cliaddr));
     Listen(listenfd); 
-    pthread_t tid[10];
-    for(int i=0;i<9;i++)
+    SetNonBlocking(listenfd);
+    struct epoll_event events[100];
+    Http_Handle handler[100];
+    struct epoll_event ev;
+    ev.data.fd=listenfd;
+    ev.events=EPOLLIN;
+    int epfd=Epoll_create(80);
+    Epoll_ctl(epfd,EPOll_CTL_ADD,listenfd,&ev);
+    sockaddr_in cliaddr;
+    socklen_t clilen;
+    while(true)
     {
-        int* tmp=new int;
-        *tmp=i;
-        Pthread_create(&tid[i],NULL,handle_thread,tmp);
+        int num=Epoll_wait(epfd,events,100,-1);
+        for(int i=0;i<num;i++)
+        {
+            if(events[i].fd==listenfd)
+            {
+               int connfd;
+               if((rc=accetp(listenfd,(sockaddr*)&cliaddr,&clien))<0)
+               {
+                   if(connfd==EAGAIN)
+                   {
+                        continue;
+                   }
+                   else
+                       unix_error("accept failured!\n");
+               }
+               ev.data.fd=connfd;
+               ev.events=EPOLLIN;
+               Epoll_ctl(epfd,EPOLL_CTL_ADD,connfd,&ev);
+               handler[connfd].init(connfd);
+            }
+            else if(events[i].events&EPOLLIN)
+            {
+                int tmp=events[i].data.fd;
+                int state;
+                if((state=handler[tmp].processRead())==STATE_WRITE)
+                {
+                    events[i].events=EPOLLOUT;
+                    Epoll_ctl(epfd,EPOLL_CTL_MOD,events[i].data.fd,&events[i]);
+                }
+                else//STATE_ERROR
+                {
+                    Epoll_ctl(epfd,EPOLL_CTL_DEL,events[i].data.fd,&events[i]);
+                    Close(tmp);
+                }
+            }
+            else if(events[i].events&EPOLLOUT)
+            {
+                int tmp=events[i].data.fd;
+                int state;
+                if((state=handler[tmp].processWrite())==STATE_READ)
+                {
+
+                }
+                else
+                {
+                    if(state==STATE_SUCCESS&&isAlive())
+                    {
+                        events[i].events=EPOLLIN;
+                        Epoll_ctl(epfd,EPOLL_CTL_MOD,events[i].data.fd,&events);
+                        continue;
+                    }
+                    Epoll_ctl(epfd,EPOLL_CTL_DEL,events[i].data.fd,&events[i]);
+                    Close(tmp);     
+                }
+            }
+            else
+                unix_error("Epoll_wait failured!\n");
+        }
     }
-    for(;;)
-        pause();
-    return 0;
+     return 0;
 }
 

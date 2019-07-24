@@ -1,5 +1,5 @@
 #pragma once
-#include"loca.h"
+#include"local.h"
 #include<sys/epoll.h>
 int Epoll_create(int);
 int Epoll_ctl(int,int,int,struct epoll_event*);

@@ -43,6 +43,12 @@ int Accept(int listenfd,sockaddr* client,socklen_t* len)
         unix_error("accept failure!");
     return rc;
 }
+void SetNonBlocking(int fd)
+{
+    int flags=fcntl(fd,F_GETFL,0);
+    flags|=O_NONBLOCK;
+    fcntl(fd,F_SETFL,flags);
+}
 void BindServbuf(int fd,Servbuf* servbuf)
 {
     servbuf->fd=fd;

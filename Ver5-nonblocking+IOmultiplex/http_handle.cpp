@@ -1,7 +1,7 @@
 #include <iostream>
 #include"http_handle.h"
 extern const char* home_page;
-extern const char* index;
+extern const char* root_dir;
 extern Cache g_cache;
 bool HttpHandle::readtBuf()
 {
@@ -26,7 +26,7 @@ void HttpHandle::getLine(char* buf)
     int rc;
     while(true)
     {
-        memcpy(buf,readBuf+nSolve,1);
+        memcpy(buf,readbuf+nSolve,1);
         nSolve++;
         if(*(buf+(num++))=='\n')
             break;
@@ -76,9 +76,9 @@ void HttpHandle::serveStatic(char* filename,char* filetype)
     addResponse("HTTP/1.0 200 OK\r\n");
     getFiletype(filename,filetype);
     //struct stat fileinfo;
-    if(file->size)<0)
+    if(file->Size()<0)
         unix_error("Get FileInfo failured!\n");
-    addResponse("Content-length: %d\r\n",file->size);
+    addResponse("Content-length: %d\r\n",file->Size());
     addResponse("Content-type: %s\r\n\r\n",filetype);
     sendFile=true;
 }
@@ -100,10 +100,10 @@ void HttpHandle::getFiletype(char* filename,char* filetype)
         strcpy(filetype,"text/plain");
 
 }
-void HttpHandle::addResponse(const char* body)
+void HttpHandle::addResponse(char* body)
 {
         int num=strlen(body);
-        if(nWrite+body>MAXIOBUF)
+        if(nWrite+strlen(body)>MAXIOBUF)
             return;//TODO:所写内容超过缓冲区大小
         sprintf(writebuf+nWrite,"%s",body);
         nWrite+=num;
@@ -137,10 +137,10 @@ void HttpHandle::clienterror(const char* cause,const char* errnum,const char* sh
 }
 void HttpHandle::parseurl(char* url,char* filename)
 {
-    sprintf(filename,"%s",home_page);
-    sprintf(filename+strlen(filename),"%s",url)
+    sprintf(filename,"%s",root_dir);
+    sprintf(filename+strlen(filename),"%s",url);
     if(url[strlen(url)-1]=='/')
-        sprintf(filename+strlen(filename),"%s",index);
+        sprintf(filename+strlen(filename),"%s",home_page);
 }
 void HttpHandle::readRequest()
 {
@@ -155,7 +155,7 @@ void HttpHandle::readRequest()
     }
     return;
 }
-int Http_Hanlde::processWrite()
+int Http_Handle::processWrite()
 {
     int rc;
     while(nWrite<strlen(writeBuf))
@@ -190,4 +190,8 @@ int Http_Hanlde::processWrite()
     if(keepAlive)
         return STATE_READ;
     return STATE_SUCCESS;
+}
+bool isAlive()
+{
+    return keepAlive; 
 }
