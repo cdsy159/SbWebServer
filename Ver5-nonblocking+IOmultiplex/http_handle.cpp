@@ -10,10 +10,10 @@ bool Http_Handle::readtBuf()
     {
         if((rc=read(fd,readbuf,MAXIOBUF-nRead-1))<0)
         {
-            if(rc==EAGAIN)
-                break;
-            else
-                return false; 
+                if(errno==EAGAIN)
+                    break;
+                else
+                    return false;
         }
         else
             nRead+=rc;
@@ -26,7 +26,7 @@ void Http_Handle::getLine(char* buf)
     int rc;
     while(true)
     {
-        memcpy(buf,readbuf+nSolve,1);
+        memcpy(buf+num,readbuf+nSolve,1);
         nSolve++;
         if(*(buf+(num++))=='\n')
             break;
@@ -162,7 +162,7 @@ int Http_Handle::processWrite()
     {
         if((rc==write(fd,writebuf+nWrite,strlen(writebuf)-nWrite))<0)
         {
-            if(rc==EAGAIN)
+            if(errno==EAGAIN)
                 return STATE_WRITE;
             else
                 return STATE_ERROR;
@@ -176,7 +176,7 @@ int Http_Handle::processWrite()
         {
             if((rc=write(fd,(char*)(file->Addr())+pos,file->Size()-pos))<0)
             {
-                if(rc==EAGAIN)
+                if(errno==EAGAIN)
                     return STATE_WRITE;
                 else
                     return STATE_ERROR;

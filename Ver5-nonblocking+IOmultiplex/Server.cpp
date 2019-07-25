@@ -17,7 +17,7 @@ int main()
    // socklen_t len=sizeof(cliaddr);
    // memset(&cliaddr,0,sizeof(cliaddr));
     Listen(listenfd); 
-    SetNonBlocking(listenfd);
+    //SetNonBlocking(listenfd);
     struct epoll_event events[100];
     Http_Handle handler[100];
     struct epoll_event ev;
