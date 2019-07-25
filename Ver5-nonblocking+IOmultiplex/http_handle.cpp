@@ -3,7 +3,7 @@
 extern const char* home_page;
 extern const char* root_dir;
 extern Cache g_cache;
-bool HttpHandle::readtBuf()
+bool Http_Handle::readtBuf()
 {
     int rc;
     while(true)
@@ -20,7 +20,7 @@ bool HttpHandle::readtBuf()
     }
     return true;
 }
-void HttpHandle::getLine(char* buf)
+void Http_Handle::getLine(char* buf)
 {
     int num=0;
     int rc;
@@ -34,7 +34,7 @@ void HttpHandle::getLine(char* buf)
     buf[num]=0;
     return;
 }
-int HttpHandle::processRead()
+int Http_Handle::processRead()
 {
     //解析请求，同时处理请求
     //processRead职能：
@@ -62,7 +62,7 @@ int HttpHandle::processRead()
     serveStatic(filename,filetype);
     return STATE_WRITE;
 }
-void HttpHandle::serveStatic(char* filename,char* filetype)
+void Http_Handle::serveStatic(char* filename,char* filetype)
 {
     //写入响应行和响应头
     // sprintf(writebuf+nWrite,"HTTP/1.0 200 OK\r\n");//响应行
@@ -82,7 +82,7 @@ void HttpHandle::serveStatic(char* filename,char* filetype)
     addResponse("Content-type: %s\r\n\r\n",filetype);
     sendFile=true;
 }
-void HttpHandle::getFiletype(char* filename,char* filetype)
+void Http_Handle::getFiletype(char* filename,char* filetype)
 {
     if(strstr(filename,".html"))
         strcpy(filetype,"text/html");
@@ -100,7 +100,7 @@ void HttpHandle::getFiletype(char* filename,char* filetype)
         strcpy(filetype,"text/plain");
 
 }
-void HttpHandle::addResponse(char* body)
+void Http_Handle::addResponse(char* body)
 {
         int num=strlen(body);
         if(nWrite+strlen(body)>MAXIOBUF)
@@ -108,7 +108,7 @@ void HttpHandle::addResponse(char* body)
         sprintf(writebuf+nWrite,"%s",body);
         nWrite+=num;
 }
-void HttpHandle::addResponse(const char* format,...)
+void Http_Handle::addResponse(const char* format,...)
 {
         va_list args;
         va_start(args,format);
@@ -118,7 +118,7 @@ void HttpHandle::addResponse(const char* format,...)
             nWrite+=ret;
         return;
 }
-void HttpHandle::clienterror(const char* cause,const char* errnum,const char* shortmsg,const char* longmsg)
+void Http_Handle::clienterror(const char* cause,const char* errnum,const char* shortmsg,const char* longmsg)
 {
         //2019 7.20 TODO:完成clienterror
         char body[MAXLINE];
@@ -135,14 +135,14 @@ void HttpHandle::clienterror(const char* cause,const char* errnum,const char* sh
         return;
 
 }
-void HttpHandle::parseurl(char* url,char* filename)
+void Http_Handle::parseurl(char* url,char* filename)
 {
     sprintf(filename,"%s",root_dir);
     sprintf(filename+strlen(filename),"%s",url);
     if(url[strlen(url)-1]=='/')
         sprintf(filename+strlen(filename),"%s",home_page);
 }
-void HttpHandle::readRequest()
+void Http_Handle::readRequest()
 {
     char buf[MAXLINE];
     while(true)
@@ -158,23 +158,23 @@ void HttpHandle::readRequest()
 int Http_Handle::processWrite()
 {
     int rc;
-    while(nWrite<strlen(writeBuf))
+    while(nWrite<strlen(writebuf))
     {
-        if((rc==write(fd,writeBuf+nWrite,strlen(writeBuf)-nWrite))<0)
+        if((rc==write(fd,writebuf+nWrite,strlen(writebuf)-nWrite))<0)
         {
             if(rc==EAGAIN)
                 return STATE_WRITE;
             else
-                retrun STATE_ERROR;
+                return STATE_ERROR;
         }
         nWrite+=rc;
     }
     if(sendFile)
     {
-        int pos=nWrite-strlen(nWrite);
+        int pos=nWrite-strlen(writebuf);
         while(true)
         {
-            if((rc=write(fd,(char*)(file->addr)+pos,file->size-pos))<0)
+            if((rc=write(fd,(char*)(file->Addr())+pos,file->Size()-pos))<0)
             {
                 if(rc==EAGAIN)
                     return STATE_WRITE;
@@ -191,7 +191,7 @@ int Http_Handle::processWrite()
         return STATE_READ;
     return STATE_SUCCESS;
 }
-bool isAlive()
+bool Http_Handle::isAlive()
 {
     return keepAlive; 
 }

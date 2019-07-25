@@ -16,9 +16,14 @@ public:
 int main()
 {
     
-    shared_ptr<A> a=make_shared<A>();
-    a->display();
+    //shared_ptr<A> a=make_shared<A>();
+    //a->display();
    // sb.display();
+    int sb=100;
+    vector<int> arr;
+    arr.push_back(sb);
+    cout<<&sb<<endl;
+    cout<<&arr[0]<<endl;
     return 0;
 }
 

@@ -5,11 +5,11 @@
 #include"state.h"
 #include<stdarg.h>
 #define MAXIOBUF 1024
-class HttpHandle:public noncopyable
+class Http_Handle:public noncopyable
 {
 public:
-    HttpHandle();
-    ~HttpHandle()
+    Http_Handle();
+    ~Http_Handle()
     {
         file.reset();
     }
@@ -38,7 +38,7 @@ public:
     void parseurl(char*,char*);
 private:
     int fd;
-    std::shared_ptr<FileInfo*> file; 
+    std::shared_ptr<FileInfo> file; 
     //write buf 
     char writebuf[MAXIOBUF];
     int nWrite;

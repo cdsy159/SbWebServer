@@ -4,6 +4,9 @@
 #include"mutex.h"
 #include"cache.h"
 #include"epoll_wrap.h"
+#include"http_handle.h"
+#include"state.h"
+#include<sys/epoll.h>
 int listenfd;
 MutexLock mutex;
 Cache g_cache;
@@ -21,7 +24,7 @@ int main()
     ev.data.fd=listenfd;
     ev.events=EPOLLIN;
     int epfd=Epoll_create(80);
-    Epoll_ctl(epfd,EPOll_CTL_ADD,listenfd,&ev);
+    Epoll_ctl(epfd,EPOLL_CTL_ADD,listenfd,&ev);
     sockaddr_in cliaddr;
     socklen_t clilen;
     while(true)
@@ -29,10 +32,10 @@ int main()
         int num=Epoll_wait(epfd,events,100,-1);
         for(int i=0;i<num;i++)
         {
-            if(events[i].fd==listenfd)
+            if(events[i].data.fd==listenfd)
             {
                int connfd;
-               if((rc=accetp(listenfd,(sockaddr*)&cliaddr,&clien))<0)
+               if((connfd=accept(listenfd,(sockaddr*)&cliaddr,&clilen))<0)
                {
                    if(connfd==EAGAIN)
                    {
@@ -71,10 +74,10 @@ int main()
                 }
                 else
                 {
-                    if(state==STATE_SUCCESS&&isAlive())
+                    if(state==STATE_SUCCESS&&handler[tmp].isAlive())
                     {
                         events[i].events=EPOLLIN;
-                        Epoll_ctl(epfd,EPOLL_CTL_MOD,events[i].data.fd,&events);
+                        Epoll_ctl(epfd,EPOLL_CTL_MOD,events[i].data.fd,&events[i]);
                         continue;
                     }
                     Epoll_ctl(epfd,EPOLL_CTL_DEL,events[i].data.fd,&events[i]);

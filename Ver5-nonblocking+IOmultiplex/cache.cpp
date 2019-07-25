@@ -1,24 +1,26 @@
 #include"cache.h"
-std::shared_ptr<FileInfo*> Cache::getFile(char* filename)
+std::shared_ptr<FileInfo> Cache::getFile(char* filename)
 {
     //为了避免多个线程同时请求同一个不存在于cache中的资源，在新建这个资源到cache时要加锁.
     MutexLockGuard lock(mutex_);
     if(cache.find(filename)!=cache.end())
     {
-        (*cache[filename])->Add();
+        (cache[filename])->Add();
         return cache[filename];
     }
     else
     {
-        if((*cache[filename])->Size()>=MAXCACHE)
+        if((cache[filename])->Size()>=MAXCACHE)
             cleancache();
         {
             bool flag;
-            //MutexLockGuard lock(mutex_);
-            FileInfo* ptr=new FileInfo(filename,flag);
+            cache[filename]=std::make_shared<FileInfo>(filename,flag);
             if(!flag)
+            {
+                cache.erase(filename);
                 return NULL;
-            cache[filename]=std::make_shared<FileInfo*>(ptr);
+            }
+            dict.push_back(cache[filename]);
            // dict.push_back(ptr);
             return cache[filename];
         }
@@ -44,12 +46,9 @@ FileInfo::~FileInfo()
     Munmap(addr,size);
     return;
 }
-bool FileInfo::cmp(FileInfo* b)
+int FileInfo::Count()
 {
-    if(count>b->count)
-        return true;
-    else
-        return false;
+    return count;
 }
 void FileInfo::Add()
 {
@@ -59,9 +58,17 @@ int FileInfo::Size()
 {
     return size;
 }
-bool compare(FileInfo* a,FileInfo* b)
+void* FileInfo::Addr()
 {
-    return a->cmp(b);
+    return addr;
+}
+bool compare(std::shared_ptr<FileInfo> a,std::shared_ptr<FileInfo> b)
+{
+    if(a->Count()>b->Count())
+        return true;
+    else
+        return false;
+
 }
 void Cache::cleancache()
 {
