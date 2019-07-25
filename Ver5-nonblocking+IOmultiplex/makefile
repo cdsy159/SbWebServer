@@ -1,5 +1,5 @@
 edit:Server.o net.o local.o epoll_wrap.o cache.o http_handle.o 
-	g++ -o edit Server.o net.o local.o epoll_wrap.o cache.o http_handle.o -lpthread
+	g++ -o edit Server.o net.o local.o epoll_wrap.o cache.o http_handle.o -lpthread 
 Server.o:Server.cpp 
 	g++ -c -g  Server.cpp
 net.o:net.cpp 

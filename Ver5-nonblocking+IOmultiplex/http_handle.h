@@ -8,7 +8,7 @@
 class Http_Handle:public noncopyable
 {
 public:
-    Http_Handle();
+    Http_Handle(){}
     ~Http_Handle()
     {
         file.reset();

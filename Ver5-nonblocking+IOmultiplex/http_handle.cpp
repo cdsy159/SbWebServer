@@ -8,7 +8,7 @@ bool Http_Handle::readtBuf()
     int rc;
     while(true)
     {
-        if((rc=recv(fd,readbuf,MAXIOBUF-nRead-1,0))<0)
+        if((rc=read(fd,readbuf,MAXIOBUF-nRead-1))<0)
         {
             if(rc==EAGAIN)
                 break;
