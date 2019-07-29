@@ -11,12 +11,13 @@ public:
     Http_Handle(){}
     ~Http_Handle()
     {
-        file.reset();
+        //file.reset();
     }
     void init(int sockfd)
     {
         fd=sockfd;
         nWrite=0;
+        nSend=0;
         nRead=0;
         nSolve=0;
         keepAlive=false;
@@ -36,12 +37,14 @@ public:
     void addResponse(const char*,...);
     bool isAlive();
     void parseurl(char*,char*);
+    void clear();
 private:
     int fd;
     std::shared_ptr<FileInfo> file; 
     //write buf 
     char writebuf[MAXIOBUF];
     int nWrite;
+    int nSend;
     //read buf
     char readbuf[MAXIOBUF];
     int nRead;

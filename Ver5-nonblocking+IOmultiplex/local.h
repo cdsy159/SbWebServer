@@ -13,6 +13,7 @@
 #include<fcntl.h>
 #include<sys/stat.h>
 #include<pthread.h>
+#include<signal.h>
 #define LISTENQ 50
 #define MAXBUFFER 8192
 #define MAXLINE 1024
@@ -42,5 +43,6 @@ ssize_t writen(int,void*,size_t);
 void Pthread_create(pthread_t* tidp,const pthread_attr_t* attr,void* (*handle)(void*),void* arg);
 void Pthread_detach(pthread_t tid);
 void SetNonBlocking(int);
+void Sigaction(int sig,void (*handler)(int),bool restart);
 #endif
 

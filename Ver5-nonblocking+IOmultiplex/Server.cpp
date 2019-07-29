@@ -12,6 +12,7 @@ MutexLock mutex;
 Cache g_cache;
 int main()
 {
+    Sigaction(SIGPIPE,SIG_IGN,false);
     listenfd=initList(8080);
    // sockaddr_in cliaddr;
    // socklen_t len=sizeof(cliaddr);
@@ -60,7 +61,8 @@ int main()
                 }
                 else//STATE_ERROR
                 {
-                    Epoll_ctl(epfd,EPOLL_CTL_DEL,events[i].data.fd,&events[i]);
+                    Epoll_ctl(epfd,EPOLL_CTL_DEL,events[i].data.fd,0);
+                    handler[tmp].clear();
                     Close(tmp);
                 }
             }
@@ -70,24 +72,27 @@ int main()
                 int state;
                 if((state=handler[tmp].processWrite())==STATE_READ)
                 {
-
+                    events[i].events=EPOLLIN;
+                    Epoll_ctl(epfd,EPOLL_CTL_MOD,events[i].data.fd,&events[i]);
+                }
+                else if(state==STATE_SUCCESS)
+                {
+                    Epoll_ctl(epfd,EPOLL_CTL_DEL,events[i].data.fd,0);
+                    handler[tmp].clear();
+                    Close(tmp);     
                 }
                 else
                 {
-                    if(state==STATE_SUCCESS&&handler[tmp].isAlive())
-                    {
-                        events[i].events=EPOLLIN;
-                        Epoll_ctl(epfd,EPOLL_CTL_MOD,events[i].data.fd,&events[i]);
-                        continue;
-                    }
-                    Epoll_ctl(epfd,EPOLL_CTL_DEL,events[i].data.fd,&events[i]);
-                    Close(tmp);     
+                    Epoll_ctl(epfd,EPOLL_CTL_DEL,events[i].data.fd,0);
+                    handler[tmp].clear();
+                    Close(tmp);
                 }
             }
             else
                 unix_error("Epoll_wait failured!\n");
         }
     }
-     return 0;
+    unix_error("Server is shutdown now!");
+    return 0;
 }
 

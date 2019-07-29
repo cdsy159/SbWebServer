@@ -16,6 +16,20 @@ void Bind(int fd,sockaddr* servaddr)
     if(bind(fd,servaddr,sizeof(sockaddr))<0)
         unix_error("bind failure!");
 }
+void Sigaction(int sig,void (*handler)(int),bool restart=false)
+{
+    struct sigaction act;
+    act.sa_handler=handler;
+    sigfillset(&act.sa_mask);
+    if(restart)
+    {
+        act.sa_flags|=SA_RESTART;
+    }
+    int rc;
+    if((rc=sigaction(sig,&act,NULL))!=0)
+       unix_error("SigSet failured!");
+    return;
+}
 int initList(int port)
 {
     int listenfd=Socket();

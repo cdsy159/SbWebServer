@@ -10,7 +10,7 @@ std::shared_ptr<FileInfo> Cache::getFile(char* filename)
     }
     else
     {
-        if((cache[filename])->Size()>=MAXCACHE)
+        if(cache.size()>=MAXCACHE)
             cleancache();
         {
             bool flag;
@@ -72,9 +72,17 @@ bool compare(std::shared_ptr<FileInfo> a,std::shared_ptr<FileInfo> b)
 }
 void Cache::cleancache()
 {
+    /*
     sort(dict.begin(),dict.end(),compare);
     int mid=dict.size()/2;
-    dict.erase(dict.begin()+mid,dict.end());
+    for(int i=mid;i<dict.size();i++)
+    {
+        auto it=dict.begin()+i;
+        cache.erase(cache[*it])  
+    }*/
+    std::cout<<"arr full!\n"<<std::endl;
+    cache.erase(cache.begin());
+    //dict.erase(dict.begin()+mid,dict.end());
 }
 /*
  1.cleancache里面不用加锁，因为调用cleancache时已经加锁了，若在加锁则形成死锁。

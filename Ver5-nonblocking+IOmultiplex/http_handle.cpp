@@ -57,6 +57,8 @@ int Http_Handle::processRead()
         return STATE_WRITE;
     }//TODO:clienterror()....
     parseurl(url,filename);
+    
+    printf("fd:%d,filename: %s\n",fd,filename);
     readRequest();
     //isStatic();
     serveStatic(filename,filetype);
@@ -80,6 +82,7 @@ void Http_Handle::serveStatic(char* filename,char* filetype)
         unix_error("Get FileInfo failured!\n");
     addResponse("Content-length: %d\r\n",file->Size());
     addResponse("Content-type: %s\r\n\r\n",filetype);
+    int totw=strlen(writebuf);
     sendFile=true;
 }
 void Http_Handle::getFiletype(char* filename,char* filetype)
@@ -103,19 +106,19 @@ void Http_Handle::getFiletype(char* filename,char* filetype)
 void Http_Handle::addResponse(char* body)
 {
         int num=strlen(body);
-        if(nWrite+strlen(body)>MAXIOBUF)
+        if(strlen(writebuf)+num>MAXIOBUF)
             return;//TODO:所写内容超过缓冲区大小
-        sprintf(writebuf+nWrite,"%s",body);
-        nWrite+=num;
+        sprintf(writebuf+strlen(writebuf),"%s",body);
+        //nWrite+=num;
 }
 void Http_Handle::addResponse(const char* format,...)
 {
         va_list args;
         va_start(args,format);
-        int ret=vsprintf(writebuf+nWrite,format,args);
+        int ret=vsprintf(writebuf+strlen(writebuf),format,args);
         va_end(args);
-        if(ret>=0)
-            nWrite+=ret;
+        //if(ret>=0)
+            //nWrite+=ret;
         return;
 }
 void Http_Handle::clienterror(const char* cause,const char* errnum,const char* shortmsg,const char* longmsg)
@@ -155,9 +158,22 @@ void Http_Handle::readRequest()
     }
     return;
 }
+void Http_Handle::clear()
+{
+    memset(readbuf,0,MAXIOBUF);
+    memset(writebuf,0,MAXIOBUF);
+    fd=0;
+    nWrite=0;
+    nSend=0;
+    nRead=0;
+    nSolve=0;
+    keepAlive=false;
+    sendFile=false;
+}
 int Http_Handle::processWrite()
 {
     int rc;
+    int totW=strlen(writebuf);
     while(nWrite<strlen(writebuf))
     {
         if((rc==write(fd,writebuf+nWrite,strlen(writebuf)-nWrite))<0)
@@ -171,10 +187,11 @@ int Http_Handle::processWrite()
     }
     if(sendFile)
     {
-        int pos=nWrite-strlen(writebuf);
+        //int pos=nWrite-strlen(writebuf);
         while(true)
         {
-            if((rc=write(fd,(char*)(file->Addr())+pos,file->Size()-pos))<0)
+            //int pos=nWrite-strlen(writebuf);
+            if((rc=write(fd,(char*)(file->Addr())+nSend,file->Size()-nSend))<0)
             {
                 if(errno==EAGAIN)
                     return STATE_WRITE;
@@ -184,7 +201,7 @@ int Http_Handle::processWrite()
             else if(rc==0)
                 break;
             else
-                nWrite+=rc;
+                nSend+=rc;
         }
     }
     if(keepAlive)

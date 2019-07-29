@@ -7,6 +7,7 @@
 #include<vector>
 #include<unordered_map>
 #include<algorithm>
+#include<iostream>
 #define MAXCACHE 100
 class FileInfo:public noncopyable 
 {
