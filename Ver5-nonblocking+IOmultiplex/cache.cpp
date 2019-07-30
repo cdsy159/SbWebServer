@@ -17,6 +17,7 @@ std::shared_ptr<FileInfo> Cache::getFile(char* filename)
             cache[filename]=std::make_shared<FileInfo>(filename,flag);
             if(!flag)
             {
+                //std::cout<<"flag false"<<std::endl;
                 cache.erase(filename);
                 return NULL;
             }
@@ -31,6 +32,7 @@ FileInfo::FileInfo(const char* filename,bool& flag)
     int fd=open(filename,O_RDONLY);
     if(fd<0)
     {
+        std::cout<<"fail name:"<<filename<<std::endl;
         flag=false;
         return;
     }
@@ -38,12 +40,14 @@ FileInfo::FileInfo(const char* filename,bool& flag)
     stat(filename,&fileinfo);
     size=fileinfo.st_size;
     addr=Mmap(0,size,PROT_READ,MAP_PRIVATE,fd,0);
+    Close(fd);
     count=1;
     flag=true;
 }
 FileInfo::~FileInfo()
 {
-    Munmap(addr,size);
+    if(addr)
+        Munmap(addr,size);
     return;
 }
 int FileInfo::Count()
