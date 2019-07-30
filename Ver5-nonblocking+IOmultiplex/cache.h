@@ -32,7 +32,7 @@ private:
     void cleancache();
 private:
     std::unordered_map<std::string,std::shared_ptr<FileInfo> > cache;
-    std::vector<std::shared_ptr<FileInfo> > dict; 
+    //std::vector<std::shared_ptr<FileInfo> > dict; 
     //int size;
     MutexLock mutex_; 
 };

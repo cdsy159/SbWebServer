@@ -6,6 +6,7 @@ std::shared_ptr<FileInfo> Cache::getFile(char* filename)
     if(cache.find(filename)!=cache.end())
     {
         (cache[filename])->Add();
+        printf("%s: %d\n",filename,cache[filename]->Count());
         return cache[filename];
     }
     else
@@ -21,7 +22,7 @@ std::shared_ptr<FileInfo> Cache::getFile(char* filename)
                 cache.erase(filename);
                 return NULL;
             }
-            dict.push_back(cache[filename]);
+            //dict.push_back(cache[filename]);
            // dict.push_back(ptr);
             return cache[filename];
         }
@@ -32,7 +33,7 @@ FileInfo::FileInfo(const char* filename,bool& flag)
     int fd=open(filename,O_RDONLY);
     if(fd<0)
     {
-        std::cout<<"fail name:"<<filename<<std::endl;
+        //std::cout<<"fail name:"<<filename<<std::endl;
         flag=false;
         return;
     }
@@ -84,8 +85,20 @@ void Cache::cleancache()
         auto it=dict.begin()+i;
         cache.erase(cache[*it])  
     }*/
-    std::cout<<"arr full!\n"<<std::endl;
-    cache.erase(cache.begin());
+    int numdel=0;
+    for(auto iter=cache.begin();iter!=cache.end();iter++)
+    {
+        if(iter->second->Count()<10)
+        {
+            cache.erase(iter);
+            numdel++;
+        }
+    }
+    printf("The num of deleted: %d\n",numdel);
+    if(cache.size()>MAXCACHE)
+        cache.erase(cache.begin());
+    return;
+
     //dict.erase(dict.begin()+mid,dict.end());
 }
 /*

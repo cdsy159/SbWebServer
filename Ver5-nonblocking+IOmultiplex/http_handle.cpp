@@ -58,7 +58,7 @@ int Http_Handle::processRead()
     }//TODO:clienterror()....
     parseurl(url,filename);
     
-    printf("fd:%d,filename: %s\n",fd,filename);
+    //printf("fd:%d,filename: %s\n",fd,filename);
     readRequest();
     //isStatic();
     serveStatic(filename,filetype);
