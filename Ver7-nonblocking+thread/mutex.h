@@ -25,7 +25,26 @@ public:
         unresign();
         pthread_mutex_unlock(&mutex_);
     }
+    pthread_mutex_t* getPthreadMutex()
+    {
+        return &mutex_;
+    }
 private:
+    friend class Condition;
+    class UnassignGuard:noncopyable
+    {
+    public:
+        UnassignGuard(MutexLock& owner):owner_(owner)
+        {
+            owner_.unresign();
+        }
+        ~UnassignGuard()
+        {
+            owner_.assignHolder();
+        }
+    pirvate:
+        MutexLock& owner_;
+    };
     void resign()
     {
         holder=pthread_self();
