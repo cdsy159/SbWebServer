@@ -1,4 +1,6 @@
 #pragma once
+#ifndef _MUTEX_H_
+#define _MUTEX_H_ 
 #include<assert.h>
 #include<pthread.h>
 #include"noncopyable.h"
@@ -40,9 +42,9 @@ private:
         }
         ~UnassignGuard()
         {
-            owner_.assignHolder();
+            owner_.resign();
         }
-    pirvate:
+    private:
         MutexLock& owner_;
     };
     void resign()
@@ -71,3 +73,4 @@ public:
 private:
     MutexLock& mutex_;
 };
+#endif

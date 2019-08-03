@@ -162,7 +162,6 @@ void Http_Handle::clear()
 {
     memset(readbuf,0,MAXIOBUF);
     memset(writebuf,0,MAXIOBUF);
-    fd=0;
     nWrite=0;
     nSend=0;
     nRead=0;
@@ -211,4 +210,9 @@ int Http_Handle::processWrite()
 bool Http_Handle::isAlive()
 {
     return keepAlive; 
+}
+void Http_Handle::init(int sockfd)
+{
+    fd=sockfd;
+    clear();
 }

@@ -1,5 +1,6 @@
 #include"thread_pool.h"
-ThreadPool::ThreadPool(int threadNum,int maxQuequeSize)
+
+ThreadPool::ThreadPool(int threadNum,int maxQueueSize)
     :threadNum_(threadNum),maxQueueSize_(maxQueueSize)
      ,mutex_(),notEmpty_(mutex_),notFull_(mutex_)
 {
@@ -10,6 +11,7 @@ ThreadPool::ThreadPool(int threadNum,int maxQuequeSize)
         Pthread_create(&tid_t,NULL,startThread,this);
     }
 }
+
 size_t ThreadPool::queueSize()
 {
     MutexLockGuard lock(mutex_);
@@ -21,10 +23,22 @@ ThreadPool::~ThreadPool()
 }
 void* ThreadPool::startThread(void* obj)
 {
-    Pthread_detach(Pthread_self());
-    printf("Woking thread is %u",Pthread_self());
+    Pthread_detach(pthread_self());
+    printf("Woking thread is %u",pthread_self());
+    ThreadPool* pool=static_cast<ThreadPool*>(obj);
     pool->run();
     return pool;
+}
+void ThreadPool::run()
+{
+    for(;;)
+    {
+        Task task(take());
+        if(task)
+        {
+            task();
+        }
+    }
 }
 ThreadPool::Task ThreadPool::take()
 {
@@ -32,5 +46,26 @@ ThreadPool::Task ThreadPool::take()
     while(queue_.empty())
         notEmpty_.wait();
     Task task;
-
+    if(!queue_.empty())
+    {
+        task=queue_.front();
+        queue_.pop_front();
+        if(maxQueueSize_>0)
+            notFull_.notify();
+    }
+    return task;
+}
+bool ThreadPool::isFull()
+{
+    return maxQueueSize_>0&&queue_.size()>=maxQueueSize_;
+}
+bool ThreadPool::append(Task&& task)
+{
+    {
+        MutexLockGuard lock(mutex_);
+        while(isFull())
+            notFull_.wait();
+        queue_.push_back(std::move(task));
+    }
+    notEmpty_.notify();
 }

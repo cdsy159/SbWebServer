@@ -13,16 +13,7 @@ public:
     {
         //file.reset();
     }
-    void init(int sockfd)
-    {
-        fd=sockfd;
-        nWrite=0;
-        nSend=0;
-        nRead=0;
-        nSolve=0;
-        keepAlive=false;
-        sendFile=false;
-    }
+    void init(int sockfd);
     bool readtBuf();
     int processRead();
     int processWrite();
@@ -39,7 +30,11 @@ public:
     void parseurl(char*,char*);
     void clear();
 private:
+    void setState(State s){state_=s}
+private:
+    enum States{kRead,kWrite,kOver,kError};
     int fd;
+    States state_;
     std::shared_ptr<FileInfo> file; 
     //write buf 
     char writebuf[MAXIOBUF];

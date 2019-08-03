@@ -7,7 +7,7 @@
 #include"condition.h"
 #include"local.h"
 #include"noncopyable.h"
-#include"epoll_ulti.h"
+#include"epoll_wrap.h"
 class ThreadPool:noncopyable
 {
 public:
@@ -21,8 +21,8 @@ private:
     bool isFull();
     Task take();
     size_t queueSize();
-    int threadNUm_;
-    int maxQuequeSize_;
+    int threadNum_;
+    int maxQueueSize_;
     std::list<Task> queue_;
     MutexLock mutex_;
     Condition notEmpty_;
