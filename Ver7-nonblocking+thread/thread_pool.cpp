@@ -24,7 +24,7 @@ ThreadPool::~ThreadPool()
 void* ThreadPool::startThread(void* obj)
 {
     Pthread_detach(pthread_self());
-    printf("Woking thread is %u",pthread_self());
+    //printf("Woking thread is %u\n",pthread_self());
     ThreadPool* pool=static_cast<ThreadPool*>(obj);
     pool->run();
     return pool;

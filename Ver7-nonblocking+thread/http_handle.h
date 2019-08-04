@@ -4,6 +4,7 @@
 #include"cache.h"
 #include"state.h"
 #include<stdarg.h>
+#include"epoll_wrap.h"
 #define MAXIOBUF 1024
 class Http_Handle:public noncopyable
 {
@@ -13,6 +14,7 @@ public:
     {
         //file.reset();
     }
+    static void setepollfd(int);
     void init(int sockfd);
     bool readtBuf();
     int processRead();
@@ -29,10 +31,15 @@ public:
     bool isAlive();
     void parseurl(char*,char*);
     void clear();
-private:
-    void setState(State s){state_=s}
+    void process();
+public:
+    static int epollfd;
 private:
     enum States{kRead,kWrite,kOver,kError};
+    void setState(States s){state_=s;}
+private:
+    //enum States{kRead,kWrite,kOver,kError};
+    //static int epollfd;
     int fd;
     States state_;
     std::shared_ptr<FileInfo> file; 

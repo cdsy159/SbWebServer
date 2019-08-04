@@ -34,36 +34,6 @@ void Http_Handle::getLine(char* buf)
     buf[num]=0;
     return;
 }
-int Http_Handle::processRead()
-{
-    //解析请求，同时处理请求
-    //processRead职能：
-    //解析头，讲需要写入socket的内容先写入HttpHandle的缓冲区
-    //最后从缓冲区写入socket的任务交由processWrite()来进行
-    //另外，如果出现非GET,或资源不存在的问题，processRead将需要发送给客户端的错误信息写入HttpHandle的缓冲区
-    char buf[MAXLINE];
-    char method[MAXLINE];
-    char url[MAXLINE];
-    char version[MAXLINE];
-    char filename[MAXLINE];
-    char filetype[MAXLINE];
-    if(readtBuf()==false)
-        return STATE_ERROR;
-    getLine(buf);
-    sscanf(buf,"%s %s %s",method,url,version);
-    if(strcasecmp(method,"GET"))
-    {
-        clienterror("Can Only support GET","501","Can Only support GET","Use GET plz!");
-        return STATE_WRITE;
-    }//TODO:clienterror()....
-    parseurl(url,filename);
-    
-    //printf("fd:%d,filename: %s\n",fd,filename);
-    readRequest();
-    //isStatic();
-    serveStatic(filename,filetype);
-    return STATE_WRITE;
-}
 void Http_Handle::serveStatic(char* filename,char* filetype)
 {
     //写入响应行和响应头
@@ -169,18 +139,107 @@ void Http_Handle::clear()
     keepAlive=false;
     sendFile=false;
 }
+bool Http_Handle::isAlive()
+{
+    return keepAlive; 
+}
+void Http_Handle::init(int sockfd)
+{
+    fd=sockfd;
+    int optival=1;
+    if(setsockopt(fd,SOL_SOCKET,SO_REUSEADDR,(const void*)&optival,sizeof(int))<0)
+        unix_error("REUSEADDR failured!");
+    setState(kRead);
+    clear();
+}
+void Http_Handle::setepollfd(int epfd)
+{
+    epollfd=epfd;
+}
+void Http_Handle::process()
+{
+    switch(state_)
+    {
+    case kRead:
+        if(processRead()==STATE_WRITE)
+            modfd(epollfd,fd,EPOLLOUT);
+        else
+            removefd(epollfd,fd);
+        //printf("kRead removed\n");
+        break;
+    case kWrite:
+        int rc;
+        if((rc=processWrite())==STATE_READ)
+            modfd(epollfd,fd,EPOLLIN);
+        else if(rc==STATE_WRITE)
+        {
+            //do nothing
+        }
+        else if(rc==STATE_SUCCESS)
+            removefd(epollfd,fd);
+        else
+            removefd(epollfd,fd);
+        //printf("kWrite removed\n");
+        break;
+    //default:
+        //printf("default remove\n");    
+        //removefd(epollfd,fd);
+        //break;
+    }
+}
+int Http_Handle::processRead()
+{
+    //解析请求，同时处理请求
+    //processRead职能：
+    //解析头，讲需要写入socket的内容先写入HttpHandle的缓冲区
+    //最后从缓冲区写入socket的任务交由processWrite()来进行
+    //另外，如果出现非GET,或资源不存在的问题，processRead将需要发送给客户端的错误信息写入HttpHandle的缓冲区
+    char buf[MAXLINE];
+    char method[MAXLINE];
+    char url[MAXLINE];
+    char version[MAXLINE];
+    char filename[MAXLINE];
+    char filetype[MAXLINE];
+    if(readtBuf()==false)
+    {
+        setState(kError);
+        return STATE_ERROR;
+    }
+    getLine(buf);
+    sscanf(buf,"%s %s %s",method,url,version);
+    if(strcasecmp(method,"GET"))
+    {
+        clienterror("Can Only support GET","501","Can Only support GET","Use GET plz!");
+        setState(kWrite);
+        return STATE_WRITE;
+    }//TODO:clienterror()....
+    parseurl(url,filename);
+    
+    //printf("fd:%d,filename: %s\n",fd,filename);
+    readRequest();
+    //isStatic();
+    serveStatic(filename,filetype);
+    setState(kWrite);
+    return STATE_WRITE;
+}
 int Http_Handle::processWrite()
 {
     int rc;
     int totW=strlen(writebuf);
     while(nWrite<strlen(writebuf))
     {
-        if((rc==write(fd,writebuf+nWrite,strlen(writebuf)-nWrite))<0)
+        if((rc=write(fd,writebuf+nWrite,strlen(writebuf)-nWrite))<0)
         {
             if(errno==EAGAIN)
+            {
+                setState(kWrite);
                 return STATE_WRITE;
+            }
             else
+            {
+                setState(kError);
                 return STATE_ERROR;
+            } 
         }
         nWrite+=rc;
     }
@@ -193,9 +252,15 @@ int Http_Handle::processWrite()
             if((rc=write(fd,(char*)(file->Addr())+nSend,file->Size()-nSend))<0)
             {
                 if(errno==EAGAIN)
+                {
+                    setState(kWrite);
                     return STATE_WRITE;
+                }
                 else
+                {
+                    setState(kError);
                     return STATE_ERROR;
+                }
             }
             else if(rc==0)
                 break;
@@ -204,15 +269,11 @@ int Http_Handle::processWrite()
         }
     }
     if(keepAlive)
+    {
+        setState(kRead);
         return STATE_READ;
+    }
+    setState(kOver);
     return STATE_SUCCESS;
 }
-bool Http_Handle::isAlive()
-{
-    return keepAlive; 
-}
-void Http_Handle::init(int sockfd)
-{
-    fd=sockfd;
-    clear();
-}
+
