@@ -158,34 +158,68 @@ void Http_Handle::setepollfd(int epfd)
 }
 void Http_Handle::process()
 {
-    switch(state_)
-    {
-    case kRead:
-        if(processRead()==STATE_WRITE)
-            modfd(epollfd,fd,EPOLLOUT);
-        else
-            removefd(epollfd,fd);
-        //printf("kRead removed\n");
-        break;
-    case kWrite:
-        int rc;
-        if((rc=processWrite())==STATE_READ)
-            modfd(epollfd,fd,EPOLLIN);
-        else if(rc==STATE_WRITE)
+        if(state_==kRead)
         {
-            //do nothing
+            if(processRead()==STATE_WRITE)
+            {   
+                printf("-----------------kRead:STATE_WRITE,fd:%d thread:%u------------------\n",fd,(unsigned int)(pthread_self()));
+                //printf("now solve %d,the thread is %u\n",fd,(unsigned int)(pthread_self()));
+                //printf("wrong kRead:STATE_WRITE\n");
+                modfd(epollfd,fd,EPOLLOUT);
+                //printf("-----------------END--------------------------------\n");
+            }
+            else
+            {   
+                printf("-----------------kRead:STATE_ERROR,fd:%d thread:%u------------------\n",fd,(unsigned int)(pthread_self()));
+                //printf("now solve %d,the thread is %u\n",fd,(unsigned int)(pthread_self()));
+                //printf("wrong kRead:STATE_WRONG\n");
+                removefd(epollfd,fd);
+                //printf("-----------------END--------------------------------\n");
+
+            }//printf("kRead removed\n");
+            return;
         }
-        else if(rc==STATE_SUCCESS)
-            removefd(epollfd,fd);
-        else
-            removefd(epollfd,fd);
-        //printf("kWrite removed\n");
-        break;
+        if(state_==kWrite)
+        {
+            int rc;
+            if((rc=processWrite())==STATE_READ)
+            {
+                printf("-----------------kWrite:STATE_READ,fd:%d thread:%u------------------\n",fd,(unsigned int)(pthread_self()));
+                //printf("now solve %d,the thread is %u\n",fd,(unsigned int)(pthread_self()));
+                //printf("wrong kWrite:STATE_READ\n");
+                modfd(epollfd,fd,EPOLLIN);
+                //printf("-----------------END--------------------------------\n");
+            }
+            else if(rc==STATE_WRITE)
+            {
+                //printf("-----------------kWrite:STATE_READ------------------\n");
+                //printf("now solve %d,the thread is %u\n",fd,(unsigned int)(pthread_self()));
+                //printf("rc==STATE_WRITE!!!!\n");//do nothing
+            }
+            else if(rc==STATE_SUCCESS)
+            {
+                printf("-----------------kWrite:STATE_SUCCESS,fd:%d thread:%u------------------\n",fd,(unsigned int)(pthread_self()));
+                //printf("now solve %d,the thread is %u\n",fd,(unsigned int)(pthread_self()));
+                //printf("wrong kWrite:STATE_SUCCESS\n");
+                removefd(epollfd,fd);
+                //printf("-----------------END--------------------------------\n");
+            }
+            else
+            {
+                printf("rc=%d",rc);
+                printf("-----------------kWrite:STATE_ERROR,fd:%d thread:%u------------------\n",fd,(unsigned int)(pthread_self()));
+                //printf("now solve %d,the thread is %u\n",fd,(unsigned int)(pthread_self()));
+                //printf("wrong kWrite:STATE_SUCCESS\n");
+                //printf("wrong kWrite:STATE_STATE_ERROR\n");
+                removefd(epollfd,fd);
+                //printf("-----------------END--------------------------------\n");
+            }//printf("kWrite removed\n");
+            return;
+        }
     //default:
         //printf("default remove\n");    
         //removefd(epollfd,fd);
-        //break;
-    }
+        //break;}
 }
 int Http_Handle::processRead()
 {
@@ -237,6 +271,9 @@ int Http_Handle::processWrite()
             }
             else
             {
+                if(errno==EINTR)
+                    printf("EINTR occured in write!\n");
+                printf("buf wrong reason:%s\n",strerror(errno));
                 setState(kError);
                 return STATE_ERROR;
             } 
@@ -258,6 +295,7 @@ int Http_Handle::processWrite()
                 }
                 else
                 {
+                    printf("file wrong reason:%s,the fd is: %d\n",strerror(errno),fd);
                     setState(kError);
                     return STATE_ERROR;
                 }

@@ -6,7 +6,7 @@ std::shared_ptr<FileInfo> Cache::getFile(char* filename)
     if(cache.find(filename)!=cache.end())
     {
         (cache[filename])->Add();
-        printf("%s: %d\n",filename,cache[filename]->Count());
+        //printf("%s: %d\n",filename,cache[filename]->Count());
         return cache[filename];
     }
     else

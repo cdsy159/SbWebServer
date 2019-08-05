@@ -5,6 +5,7 @@
 #include"state.h"
 #include<stdarg.h>
 #include"epoll_wrap.h"
+#include<unistd.h>
 #define MAXIOBUF 1024
 class Http_Handle:public noncopyable
 {
