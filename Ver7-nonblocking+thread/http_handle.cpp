@@ -158,14 +158,15 @@ void Http_Handle::setepollfd(int epfd)
 }
 void Http_Handle::process()
 {
+    //printf("the thread %u enther solve fd %d\n",(unsigned int)(pthread_self()),fd);
         if(state_==kRead)
         {
             if(processRead()==STATE_WRITE)
             {   
-                printf("-----------------kRead:STATE_WRITE,fd:%d thread:%u------------------\n",fd,(unsigned int)(pthread_self()));
+                //printf("-----------------kRead:STATE_WRITE,fd:%d thread:%u------------------\n",fd,(unsigned int)(pthread_self()));
                 //printf("now solve %d,the thread is %u\n",fd,(unsigned int)(pthread_self()));
                 //printf("wrong kRead:STATE_WRITE\n");
-                modfd(epollfd,fd,EPOLLOUT);
+                modfd(epollfd,fd,EPOLLOUT|EPOLLONESHOT);
                 //printf("-----------------END--------------------------------\n");
             }
             else
@@ -184,10 +185,10 @@ void Http_Handle::process()
             int rc;
             if((rc=processWrite())==STATE_READ)
             {
-                printf("-----------------kWrite:STATE_READ,fd:%d thread:%u------------------\n",fd,(unsigned int)(pthread_self()));
+                //printf("-----------------kWrite:STATE_READ,fd:%d thread:%u------------------\n",fd,(unsigned int)(pthread_self()));
                 //printf("now solve %d,the thread is %u\n",fd,(unsigned int)(pthread_self()));
                 //printf("wrong kWrite:STATE_READ\n");
-                modfd(epollfd,fd,EPOLLIN);
+                modfd(epollfd,fd,EPOLLIN|EPOLLONESHOT);
                 //printf("-----------------END--------------------------------\n");
             }
             else if(rc==STATE_WRITE)
@@ -198,7 +199,7 @@ void Http_Handle::process()
             }
             else if(rc==STATE_SUCCESS)
             {
-                printf("-----------------kWrite:STATE_SUCCESS,fd:%d thread:%u------------------\n",fd,(unsigned int)(pthread_self()));
+                //printf("-----------------kWrite:STATE_SUCCESS,fd:%d thread:%u------------------\n",fd,(unsigned int)(pthread_self()));
                 //printf("now solve %d,the thread is %u\n",fd,(unsigned int)(pthread_self()));
                 //printf("wrong kWrite:STATE_SUCCESS\n");
                 removefd(epollfd,fd);
@@ -206,8 +207,8 @@ void Http_Handle::process()
             }
             else
             {
-                printf("rc=%d",rc);
-                printf("-----------------kWrite:STATE_ERROR,fd:%d thread:%u------------------\n",fd,(unsigned int)(pthread_self()));
+                //printf("rc=%d",rc);
+                //printf("-----------------kWrite:STATE_ERROR,fd:%d thread:%u------------------\n",fd,(unsigned int)(pthread_self()));
                 //printf("now solve %d,the thread is %u\n",fd,(unsigned int)(pthread_self()));
                 //printf("wrong kWrite:STATE_SUCCESS\n");
                 //printf("wrong kWrite:STATE_STATE_ERROR\n");
@@ -271,9 +272,9 @@ int Http_Handle::processWrite()
             }
             else
             {
-                if(errno==EINTR)
-                    printf("EINTR occured in write!\n");
-                printf("buf wrong reason:%s\n",strerror(errno));
+                //if(errno==EINTR)
+                    //printf("EINTR occured in write!\n");
+                //printf("buf wrong reason:%s\n",strerror(errno));
                 setState(kError);
                 return STATE_ERROR;
             } 

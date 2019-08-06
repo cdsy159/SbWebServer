@@ -39,7 +39,7 @@ int main()
     int epfd=Epoll_create(80);
     Http_Handle::setepollfd(epfd); 
     Http_Handle handler[100];
-    ThreadPool pools(10,300);
+    ThreadPool pools(2,300);
     Epoll_ctl(epfd,EPOLL_CTL_ADD,listenfd,&ev);
     //Epoll_ctl(epfd,EPOLL_CTL_DEL,100,&ev);
     sockaddr_in cliaddr;
@@ -57,6 +57,7 @@ int main()
                 {
                     if((connfd=accept(listenfd,(sockaddr*)&cliaddr,&clilen))<0)
                     {
+                        //printf("now the accept idx:%d solve the fd:%d\n",i,connfd);
                         if(errno==EAGAIN)
                         {
                             break;
@@ -65,13 +66,16 @@ int main()
                             unix_error("accept failured!\n");
                     }
                     ev.data.fd=connfd;
-                    ev.events=EPOLLIN|EPOLLET;
+                    ev.events=EPOLLIN|EPOLLET|EPOLLONESHOT;
                     Epoll_ctl(epfd,EPOLL_CTL_ADD,connfd,&ev);
                     handler[connfd].init(connfd);   
                 }
             }
             else
+            {
+                //printf("now the idx:%d solve the fd:%d\n",i,tmpfd);
                 pools.append(boost::bind(&Http_Handle::process,&handler[tmpfd]));
+            }  
         }
     }
     unix_error("Server is shutdown now!");

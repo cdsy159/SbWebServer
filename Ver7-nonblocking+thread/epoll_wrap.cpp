@@ -48,5 +48,7 @@ void modfd(int epollfd,int fd,int ev)
 void removefd(int epollfd,int fd)
 {
     Epoll_ctl(epollfd,EPOLL_CTL_DEL,fd,0);
+    //printf("the thread %u start close!\n",(unsigned int)(pthread_self()));
     Close(fd);
+    //printf("the thread %u have closed!\n",(unsigned int)(pthread_self()));
 }
