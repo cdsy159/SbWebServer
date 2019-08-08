@@ -1,5 +1,5 @@
 #include"net.h"
-const char* root_dir="/home/xf/goodgoodstudy/Spweb/WebSiteSrc/html_book_20150808/reference";
+const char* root_dir="/home/xf/goodgoodstudy/WebSiteSrc/html_book_20150808/reference";
 const char* home_page ="index.html";
 void doit(int fd)
 {

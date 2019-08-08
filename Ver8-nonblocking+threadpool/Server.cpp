@@ -13,15 +13,25 @@ int listenfd;
 MutexLock mutex;
 Cache g_cache;
 int Http_Handle::m_epollfd=0;
+void block_sigpipe()
+{
+    sigset_t signal_mask;
+    sigemptyset(&signal_mask);
+    sigaddset(&signal_mask,SIGPIPE);
+    int rc=pthread_sigmask(SIG_BLOCK,&signal_mask,NULL);
+    if(rc!=0)
+        printf("block sigpipe error\n");
+}
 int main()
 {
-    Sigaction(SIGPIPE,SIG_IGN,false);
+    //Sigaction(SIGPIPE,SIG_IGN,false);
     listenfd=initList(8080);
    // sockaddr_in cliaddr;
    // socklen_t len=sizeof(cliaddr);
    // memset(&cliaddr,0,sizeof(cliaddr));
     Listen(listenfd); 
     //SetNonBlocking(listenfd);
+    block_sigpipe();
     struct epoll_event events[100];
     //Http_Handle handler[100];
     struct epoll_event ev;
@@ -31,7 +41,7 @@ int main()
     Http_Handle::setEpollfd(epfd);
     Http_Handle handler[100];
     Epoll_ctl(epfd,EPOLL_CTL_ADD,listenfd,&ev);
-    ThreadPool pool(2,300); 
+    ThreadPool pool(10,300); 
     sockaddr_in cliaddr;
     socklen_t clilen;
     while(true)

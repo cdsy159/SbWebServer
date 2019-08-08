@@ -181,7 +181,7 @@ int Http_Handle::processWrite()
     int totW=strlen(writebuf);
     while(nWrite<strlen(writebuf))
     {
-        if((rc==write(fd,writebuf+nWrite,strlen(writebuf)-nWrite))<0)
+        if((rc=write(fd,writebuf+nWrite,strlen(writebuf)-nWrite))<0)
         {
             if(errno==EAGAIN)
                 return STATE_WRITE;
