@@ -2,6 +2,7 @@
 #include<pthread.h>
 #include"noncopyable.h"
 #include<boost/function.hpp>
+#include<boost/bind.hpp>
 #include<queue>
 #include"mutex.h"
 #include"condition.h"

@@ -224,17 +224,32 @@ void Http_Handle::process()
     {
     case Read:
         if((rc=processRead())==STATE_WRITE)
+        {
+            setState(Write);
             modfd(m_epollfd,EPOLLOUT,fd);
+        }
         else
-           removefd(m_epollfd,fd);
+        {
+            clear();
+            removefd(m_epollfd,fd);
+        }
         break;
     case Write:
         if((rc=processWrite())==STATE_READ)
+        {
+            setState(Read);
             modfd(m_epollfd,EPOLLIN,fd);
+        }
         else if(rc==STATE_WRITE)
+        {
+            setState(Write);
             modfd(m_epollfd,EPOLLOUT,fd);
+        }
         else
-            removefd(epollfd,fd);
+        {
+            clear();
+            removefd(m_epollfd,fd);
+        }
         break;
     }
 }

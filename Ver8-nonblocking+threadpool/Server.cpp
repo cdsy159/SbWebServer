@@ -31,7 +31,7 @@ int main()
     Http_Handle::setEpollfd(epfd);
     Http_Handle handler[100];
     Epoll_ctl(epfd,EPOLL_CTL_ADD,listenfd,&ev);
-    ThreadPool pool(10,300); 
+    ThreadPool pool(2,300); 
     sockaddr_in cliaddr;
     socklen_t clilen;
     while(true)
@@ -39,6 +39,7 @@ int main()
         int num=Epoll_wait(epfd,events,100,-1);
         for(int i=0;i<num;i++)
         {
+            int tmpfd=events[i].data.fd;
             if(events[i].data.fd==listenfd)
             {
                 int connfd;
