@@ -65,7 +65,8 @@ int main()
                             unix_error("accept failured!\n");
                     }
                     addfd(epfd,EPOLLIN,connfd);
-                    handler[connfd].init(connfd);   
+                    handler[connfd].init(connfd);
+                    std::cout<<"solving "<<connfd<<std::endl;
                 }
             }
             else
