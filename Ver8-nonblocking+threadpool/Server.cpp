@@ -39,9 +39,9 @@ int main()
     ev.events=EPOLLIN|EPOLLET;
     int epfd=Epoll_create(80);
     Http_Handle::setEpollfd(epfd);
-    Http_Handle handler[100];
+    Http_Handle handler[3000];
     Epoll_ctl(epfd,EPOLL_CTL_ADD,listenfd,&ev);
-    ThreadPool pool(10,300); 
+    ThreadPool pool(10,3000); 
     sockaddr_in cliaddr;
     socklen_t clilen;
     while(true)
